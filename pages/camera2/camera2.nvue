@@ -1,0 +1,825 @@
+<template>
+	<view class="live-camera" style="width: 750rpx; height: 1500rpx;">
+		<view class="preview" style="width: 750rpx; height: 1200rpx;top: -100rpx;">
+			<cover-view style="width: 750rpx; height: 200rpx; top:100rpx;">
+				<swiper class="swiper-box" @change="changeIndex" :current="swiperCurrent" @transition="transition"
+					@animationfinish="animationfinish">
+					<swiper-item class="swiper-item" v-for="(item,index) in tabbar" :key="index">
+
+						<cover-image :src='item.icon' class="bg-set"></cover-image>
+
+					</swiper-item>
+				</swiper>
+			</cover-view>
+			<live-pusher v-if="showLive" id="livePusher" ref="livePusher" class="livePusher" mode="FHD" beauty="0"
+				whiteness="0" aspect="1:1" min-bitrate="1000" audio-quality="16KHz" device-position="back"
+				:auto-focus="true" :muted="true" :enable-camera="true" :enable-mic="false" :zoom="false"
+				@statechange="statechange" @error="error" style="width: 750rpx; top: 240rpx; height: 750rpx;">
+
+			</live-pusher>
+			<!--辅助线-->
+
+			<!-- <cover-view class="outline-box" style="width: 750rpx; height: 1200rpx;"> -->
+			<!-- <cover-image  :class="(swiperCurrent===0 || swiperCurrent==='0') ? 'outline-img' : 'outline-other'" src="@/static/camera/figs/daxiongmao.png" style=""></cover-image>
+				<cover-image  :class="(swiperCurrent===1 || swiperCurrent==='1')? 'outline-img' : 'outline-other'" src="@/static/camera/figs/tiger.png" style=""></cover-image> -->
+			<!-- </cover-view> -->
+			<image v-if="swiperCurrent==0" class="outline-img" src="@/static/camera/figs/daxiongmao.png"></image>
+			<image v-if="swiperCurrent==1" class="outline-img" src="@/static/camera/figs/beijixiong.png"></image>
+			<image v-if="swiperCurrent==2" class="outline-img" src="@/static/camera/figs/dongbeihu.png"></image>
+			<image v-if="swiperCurrent==3" class="outline-img" src="@/static/camera/figs/lanjing.png"></image>
+			<image v-if="swiperCurrent==4" class="outline-img" src="@/static/camera/figs/xuebao.png"></image>
+			<image v-if="swiperCurrent==5" class="outline-img" src="@/static/camera/figs/yangzie.png"></image>
+			<image v-if="swiperCurrent==6" class="outline-img" src="@/static/camera/figs/hongdoushan.png"></image>
+			<image v-if="swiperCurrent==7" class="outline-img" src="@/static/camera/figs/yinxing.png"></image>
+			<!-- <image :class="(swiperCurrent==0) ? 'outline-img' : 'outline-other'" src="@/static/camera/figs/daxiongmao.png" style=""></image>
+			<image :class="(swiperCurrent==1)? 'outline-img' : 'outline-other'" src="@/static/camera/figs/tiger.png" style=""></image> -->
+
+		</view>
+
+
+		<view class="menu">
+			<!--返回键-->
+			<cover-image class="menu-back" @tap="back" src="@/static/camera/album.png"></cover-image>
+			<!--快门键-->
+			<cover-image class="menu-snapshot" @tap="snapshot" src="@/static/camera/photo.png"></cover-image>
+			<!--反转键-->
+			<cover-image class="menu-flip" @tap="flip" src="@/static/camera/transition.png"></cover-image>
+		</view>
+		<!-- <canvas-crop ref="crop"></canvas-crop> -->
+	</view>
+</template>
+
+
+<script>
+	import {
+		judgeIosPermission,
+		requestAndroidPermission,
+		gotoAppPermissionSetting,
+	} from '@/common/permission.js';
+	import classifyData from "@/common/item_classify_data.js";
+	export default {
+		data() {
+			return {
+				tabbar: classifyData,
+				swiperCurrent: 0,
+				fil: true,
+				imgList: [""],
+				statusBar: '',
+				CustomBar: 0,
+				context: null,
+				devicePosition: 'back', //前置或后置摄像头,值为front, back
+				poenCarmeInterval: null, //打开相机的轮询
+				dotype: 'idcardface', //操作类型
+				message: '', //提示
+				aspect: '2:3', //比例
+				cameraWidth: '', //相机画面宽度
+				cameraHeight: '', //相机画面宽度
+				windowWidth: '', //屏幕可用宽度
+				windowHeight: '', //屏幕可用高度
+				camerastate: false, //相机准备好了
+				livePusher: null, //流视频对象
+				snapshotsrc: null, //快照
+				type: null,
+				showLive: true, //安卓机需要先判断权限有没有授权
+				imageInfo: {}, //取景框内的图片大小
+				//context: {}, //canvas实例对象
+				rpx2px: '',
+				finder: {
+					//取景框尺寸，驾驶证、行驶证为333*999，其他为640*980
+					width: 640,
+					height: 980,
+				},
+				test: '',
+				backText: [],
+				src: '',
+			};
+		},
+		onBackPress(options) {
+			if (options.from === 'navigateBack') {
+				return false;
+			} else {
+				uni.navigateBack({
+					delta: 1
+				});
+			}
+			// this.back();  
+			return true;
+		},
+		async onLoad() {
+			console.log("1");
+			this.initCamera();
+			console.log("2");
+			if (plus.os.name === 'Android') {
+				await this.checkAndriodCamera();
+			} else {
+				this.showLive = true;
+			}
+			console.log("3");
+
+			this.showLive ?
+				this.$nextTick(() => {
+					this.context = uni.createLivePusherContext('livePusher', this);
+				}) :
+				'';
+
+			console.log("4");
+			// 注意：需要在onReady中 或 onLoad 延时
+			//this.context = uni.createLivePusherContext("livePusher", this);
+			// this.$nextTick(() => {
+			//     this.context = uni.createLivePusherContext('livePusher', this);
+			//   })
+			var that = this
+			uni.getSystemInfo({
+				success: function(e) {
+					// 计算导航栏高度
+					that.statusBar = e.statusBarHeight
+				}
+			})
+			// this.start();
+			// console.log("start push info.")
+
+		},
+		methods: {
+			changeIndex(e) {
+				this.swiperCurrent = e.detail.current;
+			},
+			// tab栏切换
+			change(index) {
+				this.swiperCurrent = index;
+				console.log(this.swiperCurrent)
+			},
+			transition({
+				detail: {
+					dx
+				}
+			}) {
+				//this.$refs.tabs.setDx(dx);
+			},
+			animationfinish({
+				detail: {
+					current
+				}
+			}) {
+				//this.$refs.tabs.setFinishCurrent(current);
+				this.swiperCurrent = current;
+				this.current = current;
+				console.log(this.swiperCurrent)
+			},
+			toImage() {
+				const that = this;
+				/* 获取屏幕信息 */
+				let pages = getCurrentPages();
+				let page = pages[pages.length - 1];
+				let ws = page.$getAppWebview();
+				let bitmap = new plus.nativeObj.Bitmap('test');
+				// 将webview内容绘制到Bitmap对象中
+				ws.draw(
+					bitmap,
+					function(e) {
+						/* 获取base64 */
+						that.test = bitmap.toBase64Data();
+						/* 加载base64编码 */
+						bitmap.loadBase64Data(
+							bitmap.toBase64Data(),
+							function() {
+								console.log('加载Base64图片数据成功');
+								/* 保存图片 */
+								bitmap.save(
+									'_doc/share.jpg', {},
+									async (i) => {
+											console.log('保存图片成功：' + JSON.stringify(i));
+											uni.saveImageToPhotosAlbum({
+												filePath: i.target,
+												success: function() {
+													/* 清除 */
+													bitmap.clear();
+													that.tools.toast('保存成功,请到相册中查看')
+												},
+												fail(e) {
+													that.tools.toast('保存失败')
+												}
+											});
+										},
+										function(e) {
+											console.log('保存图片失败：' + JSON.stringify(e));
+										}
+								);
+							},
+							function() {
+								console.log('加载Base64图片数据失败：' + JSON.stringify(e));
+							}
+						);
+					},
+					function(e) {
+						console.log('截屏绘制图片失败：' + JSON.stringify(e));
+					}, {
+						check: true, // 设置为检测白屏
+						clip: {
+							top: '-100rpx',
+							left: '0rpx',
+							height: '40%',
+							width: '100%'
+						} // 设置截屏区域
+					}
+				);
+			},
+			findError(e) {
+				console.log(e)
+			},
+			initCamera() {
+				//处理安卓手机异步授权问题
+				uni.getSystemInfo({
+					success: (res) => {
+						console.log('手机信息', res);
+						this.windowWidth = res.windowWidth;
+						this.windowHeight = res.windowHeight;
+						this.cameraWidth = res.windowWidth;
+						this.cameraHeight = res.windowWidth;
+						this.rpx2px = (1 / 750) * res.windowWidth;
+						let imgW = parseInt(this.finder.width * this.rpx2px),
+							imgH = parseInt(this.finder.height * this.rpx2px); // 640和980是css里定义取景框的rpx宽度
+						this.imageInfo = {
+							width: imgW,
+							height: imgH,
+						};
+					},
+				});
+			},
+
+			//检查安卓相机权限
+			async checkAndriodCamera() {
+				let androidPermisson = await requestAndroidPermission(
+					'android.permission.CAMERA'
+				);
+				if (androidPermisson === 1) {
+					this.showLive = true;
+					this.$nextTick(() => {
+						this.context = uni.createLivePusherContext('livePusher', this);
+					});
+					setTimeout(() => {
+						//开启预览并设置摄像头
+						this.startPreview();
+						this.poenCarme();
+					}, 100);
+				} else {
+					uni.showModal({
+						content: '请打开摄像头授权功能！',
+						showCancel: false,
+						success: (res) => {
+							if (res.confirm) gotoAppPermissionSetting();
+						},
+					});
+				}
+				console.log('checkAndriodCamera', androidPermisson);
+			},
+
+			//检查照相机权限
+			checkCamera() {
+				return new Promise(async (resolve) => {
+					if (plus.os.name === 'iOS' && !judgeIosPermission('camera')) {
+						uni.showModal({
+							content: '请打开摄像头授权功能！',
+							showCancel: false,
+							success: (res) => {
+								if (res.confirm) gotoAppPermissionSetting();
+							},
+						});
+						resolve(false);
+					} else if (plus.os.name === 'Android') {
+						let androidPermisson = await requestAndroidPermission(
+							'android.permission.CAMERA'
+						);
+						console.log(androidPermisson);
+						if (androidPermisson < 1) {
+							uni.showModal({
+								content: '请打开摄像头授权功能！',
+								showCancel: false,
+							});
+							resolve(false);
+						} else {
+							resolve(true);
+						}
+					} else {
+						resolve(true);
+					}
+				});
+			},
+			//轮询打开
+			async poenCarme() {
+				if (plus.os.name == 'Android') {
+					this.poenCarmeInterval = setInterval(() => {
+						if (!this.camerastate) this.startPreview();
+					}, 1000);
+				}
+			},
+
+			//开始预览
+			startPreview() {
+				this.context.startPreview({
+					success: async (a) => {
+						//直播推流默认是前置摄像头，预览成功后给转成后置摄像头
+						if (plus.os.name == 'iOS') {
+							this.context.switchCamera();
+							this.camerastate = true;
+						}
+					},
+				});
+			},
+			error(e) {
+				clearInterval(this.poenCarmeInterval);
+				console.log('error:' + JSON.stringify(e));
+				if (e.detail.errCode === 10001) {
+					uni.showModal({
+						content: '请打开摄像头授权功能！',
+						showCancel: false,
+						success: (res) => {
+							if (res.confirm) gotoAppPermissionSetting();
+						},
+					});
+				}
+			},
+			//停止预览
+			stopPreview() {
+				this.context.stopPreview({
+					success: (a) => {
+						this.camerastate = false; //标记相机未启动
+					},
+				});
+			},
+
+			//状态
+			statechange(e) {
+				//状态改变
+				console.log(e);
+				if (e.detail.code == 1003 || e.detail.code == 1007) {
+					//1007
+					this.camerastate = true;
+				} else if (e.detail.code == -1301) {
+					this.checkCamera();
+					this.camerastate = false;
+				}
+			},
+			//返回
+			back() {
+				uni.navigateBack();
+			},
+
+			/**
+			 * 抓拍，因为APP端用的gcanvas，gcanvas.drawImage不允许临时图片，所以要先传一次图片
+			 * **/
+			snapshot() {
+				if (!this.checkCamera()) {
+					return false;
+				}
+				// this.context.start({
+				//     success: (a) => {
+				//         console.log("livePusher.start:" + JSON.stringify(a));
+				//     },
+				//  fail: (err) => {
+				//    console.log(err);
+				//  },
+				// });
+				//震动
+				uni.vibrateShort();
+				console.log("10");
+				//  const that = this;
+				//   //防止切图成白屏
+				// setTimeout(function() {
+				// 	that.toImage();
+				// }, 1000);
+				const ssTest = uni.requireNativePlugin('hsj-screenshothsj');
+				ssTest.handle2ScreenShotNotDialogFuncV2({
+						'msg': 'handle2ScreenShotNotDialogFuncV2 ...'
+					},
+					result => {
+						switch (result.type) {
+							case 0:
+								this.backText.push(result.data.toString())
+								break;
+							case 1:
+								//显示图片
+
+								this.src = result.data.toString()
+								// console.log(this.src)
+								this.getBase64ByUri(this.src).then((res) => {
+									// console.log(res)
+									this.src = res
+								})
+
+								this.backText.push("-5.0API截屏回调图片地址路径：" + result.data.toString())
+								break;
+							default:
+								console.log("no have type")
+						}
+					},
+					uni.saveImageToPhotosAlbum({
+						filePath: this.src,
+						success: function() {
+							/* 清除 */
+							console.log('保存成功,请到相册中查看')
+						},
+						fail(e) {
+							console.log('保存失败')
+						}
+					})
+				);
+
+				console.log("11");
+				// this.context.snapshot({
+				//   success: async (e) => {
+				//  console.log("11");
+				//     this.uploadImage(`file://${e.message.tempImagePath}`);
+				//  console.log("12");
+				//   },
+				//   fail: (err) => {
+				//     console.log(err);
+				//   },
+				// });
+
+			},
+			/**
+			 * 获取临时路径的图片宽高大小
+			 * **/
+			getImageInfo(path) {
+				return new Promise((resolve, reject) => {
+					uni.getImageInfo({
+						src: path,
+						success: (res) => {
+							resolve(res);
+						},
+						fail: (err) => {
+							reject(err);
+							resolve(err);
+						},
+					});
+				});
+			},
+			async uploadImage(path) {
+				uni.saveImageToPhotosAlbum({
+					filePath: path,
+					success(res) {
+						console.log(res);
+					},
+					fail(err) {
+						console.log(err);
+					}
+				});
+				// let info = await this.getImageInfo(path); //获取临时路径的图片宽高大小
+				// let width = Math.round(
+				//     ((this.rpx2px * this.finder.width) / this.cameraWidth) * info.width
+				//   ),
+				//   height = Math.round(
+				//     ((this.rpx2px * this.finder.height) / (this.windowHeight - 90)) *
+				//       info.height
+				//   );
+				// let x = parseInt((info.width - width) / 2),
+				//   y = parseInt((info.height - height) / 2);
+
+				// uploadFileOSS(path)
+				//   .then((res) => {
+				//     this.snapshotsrc =
+				//       res.url +
+				//       `?x-oss-process=image/crop,x_${x},y_${y},w_${width},h_${height}/rotate,270`;
+				//     console.log(this.snapshotsrc);
+				//     this.setImage({ x, y, width, height });
+				//     uni.navigateBack({
+				//       delta: 2,
+				//     });
+				//   })
+				//   .catch((err) => {
+				//     console.log(err);
+				//     //errorMsg(err);
+				//   });
+			},
+
+			//反转
+			flip() {
+				this.context.switchCamera();
+			},
+
+			//设置
+			setImage(x, y, width, height) {
+				let pages = getCurrentPages();
+				let prevPage = pages[pages.length - 3]; //上二个页面
+				//直接调用上二个页面的setImage()方法，把数据存到上二个页面中去
+				prevPage.$vm.setImage({
+					path: this.snapshotsrc,
+					type: this.type
+				});
+			},
+			Timer() {},
+			// statechange(e) {
+			//     console.log("statechange:" + JSON.stringify(e));
+			// },
+			// netstatus(e) {
+			//     console.log("netstatus:" + JSON.stringify(e));
+			// },
+			error(e) {
+				console.log("error:" + JSON.stringify(e));
+			},
+			// start: function() {
+			//     this.context.start({
+			//         success: (a) => {
+			//             console.log("livePusher.start:" + JSON.stringify(a));
+			//         }
+			//     });
+			// },
+			// close: function() {
+			//     this.context.close({
+			//         success: (a) => {
+			//             console.log("livePusher.close:" + JSON.stringify(a));
+			//         }
+			//     });
+			// },
+			// 拍照事件
+			//         snapshot: function() {
+			// var that = this
+			//             this.context.snapshot({
+			//                 success: (e) => {
+			//                     console.log(JSON.stringify(e));
+			// 		that.getMinImage(e.message.tempImagePath)
+			//                 }
+			//             });
+			//         },
+			// 开启摄像头
+			//         startPreview() {
+			// console.log("1")
+			// var that = this
+			// this.context.switchCamera();
+			//             this.context.startPreview({
+			//                 success: async (a) => {
+			//                     console.log("livePusher.startPreview:" + JSON.stringify(a));
+			// 		that.Timer = setInterval(function(){
+			// 			that.snapshot()
+			// 			if(that.imgList.length>3){
+			// 				console.log("3")
+			// 				clearInterval(that.Timer)
+			// 			}
+			// 		},2000)
+			//                 }
+			//             });
+			//         },
+			// 使用plus.zip.compressImage压缩图片并转换成base64
+			getMinImage(imgPath) {
+				plus.zip.compressImage({
+						src: imgPath,
+						dst: imgPath,
+						overwrite: true,
+						quality: 40
+					},
+					// zipRes => {
+					// 	setTimeout(() => {
+					// 		var reader = new plus.io.FileReader();
+					// 		reader.onloadend = res => {
+					// 			var speech = res.target.result; //base64图片
+					// 			console.log(speech);
+					// 			this.imgList.push(speech);
+					// 		};
+					// 		//一定要使用plus.io.convertLocalFileSystemURL将target地址转换为本地文件地址，否则readAsDataURL会找不到文件
+					// 		reader.readAsDataURL(plus.io.convertLocalFileSystemURL(zipRes.target));
+					// 	}, 1000);
+					// },
+					function(error) {
+						console.log('Compress error!', error);
+					}
+				);
+			},
+			BackPage() {
+				uni.navigateBack({
+					delta: 1
+				});
+			}
+
+		}
+	}
+</script>
+
+<style lang="scss">
+	.swiper-box {
+		flex: 1;
+	}
+
+	.swiper-item {
+		height: 200rpx;
+		width: 750rpx;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.bg-set {
+		width: 200rpx;
+		height: 200rpx;
+		border-radius: 100rpx;
+		z-index: 100;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.custom {
+		background-color: #2C65F7;
+	}
+
+	.navcontent {
+		height: 45px;
+		display: -ms-flex;
+		display: -webkit-flex;
+		display: flex;
+		justify-content: space-around;
+		flex-direction: row;
+		color: #FFFFFF;
+	}
+
+	.livePusher {
+		width: 750rpx;
+		height: 750rpx;
+	}
+
+	.livefater {
+		display: -ms-flex;
+		display: -webkit-flex;
+		display: flex;
+		justify-content: center;
+		flex-direction: column;
+		align-items: center;
+		margin-top: 50rpx;
+		margin-bottom: 50rpx;
+		height: 750rpx;
+	}
+
+	.gaiimg {
+		width: 750px;
+		height: 750px;
+		margin-top: -350px;
+	}
+
+	.live-camera {
+		.preview {
+			justify-content: center;
+			align-items: center;
+			position: relative;
+			z-index: 1;
+
+			.canvas {
+				visibility: hidden;
+				position: absolute;
+				top: 0;
+				z-index: -1;
+			}
+
+			.gcanvas {
+				z-index: -1;
+				position: absolute;
+			}
+
+			.outline-box {
+				position: absolute;
+				top: 0;
+				left: 0;
+				bottom: 0;
+				z-index: 99;
+
+				.outline-img {
+					width: 300rpx;
+					height: 300rpx;
+					left: 70rpx;
+					top: 650rpx;
+					z-index: 100;
+				}
+
+				.outline-other {
+					width: 0;
+					height: 0;
+					left: 0;
+					top: 0;
+					z-index: 98;
+				}
+			}
+
+			.outline-img {
+				position: absolute;
+				width: 300rpx;
+				height: 300rpx;
+				left: 58rpx;
+				top: 650rpx;
+				z-index: 100;
+			}
+
+			.outline-other {
+				position: absolute;
+				width: 0;
+				height: 0;
+				left: 0;
+				top: 0;
+				z-index: 98;
+			}
+
+			.remind {
+				position: absolute;
+				left: -106px;
+				top: 880rpx;
+				width: 750rpx;
+				z-index: 100;
+				transform: rotate(90deg);
+				align-items: center;
+				justify-content: center;
+				color: #ffffff;
+
+				.remind-text {
+					color: #ffffff;
+					font-weight: bold;
+				}
+
+				.remind-image {
+					width: 300rpx;
+					height: 300rpx;
+				}
+			}
+
+			.icon-figure {
+				position: absolute;
+				left: 0rpx;
+				top: 700rpx;
+				bottom: 100rpx;
+				width: 750rpx;
+				height: 750rpx;
+				z-index: 100;
+				align-items: center;
+				justify-content: center;
+				background-color: #ffffff;
+
+				.figures {
+					width: 300rpx;
+					height: 300rpx;
+					z-index: 101;
+				}
+			}
+		}
+
+		.menu {
+			position: absolute;
+			left: 0;
+			top: 1350rpx;
+			bottom: 100rpx;
+			width: 750rpx;
+			height: 250rpx;
+			z-index: 98;
+			align-items: center;
+			justify-content: center;
+			background-color: #F8F8F8;
+			box-sizing: inherit;
+
+			.menu-mask {
+				position: absolute;
+				left: 0;
+				bottom: 0;
+				width: 750rpx;
+				height: 150rpx;
+				z-index: 98;
+			}
+
+			.menu-back {
+				position: absolute;
+				left: 30rpx;
+				bottom: 100rpx;
+				width: 115rpx;
+				height: 115rpx;
+				z-index: 99;
+				align-items: center;
+				justify-content: center;
+			}
+
+			.menu-snapshot {
+				position: absolute;
+				width: 130rpx;
+				height: 130rpx;
+				z-index: 99;
+				margin-left: 307.5rpx;
+				margin-right: 307.5rpx;
+				bottom: 100rpx;
+				align-items: center;
+				justify-content: center;
+			}
+
+			.menu-flip {
+				position: absolute;
+				right: 30rpx;
+				bottom: 100rpx;
+				width: 130rpx;
+				height: 130rpx;
+				z-index: 99;
+				align-items: center;
+				justify-content: center;
+			}
+		}
+	}
+
+	.back {
+		width: 88rpx;
+		height: 88rpx;
+		margin-left: 20rpx;
+		margin-top: env(safe-area-inset-top);
+		position: absolute;
+		top: 0;
+		left: 0;
+	}
+</style>
