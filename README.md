@@ -1,6 +1,5 @@
 # GoGreen-uniapp
 
----
 ## 运行环境
 语言：uniapp, html, css, js
 IDE: HBuilderX
@@ -11,4 +10,4 @@ IDE: HBuilderX
 
 ## 交互逻辑图
 
-![Interact image](https://raw.github.com/hhhh1138/GoGreen-uniapp/blob/masterIMG/interact.png)
+![Interact image](https://github.com/hhhh1138/GoGreen-uniapp/blob/main/IMG/interact.png)
