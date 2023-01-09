@@ -10,4 +10,4 @@ IDE: HBuilderX
 
 ## 交互逻辑图
 
-![Interact image](https://github.com/hhhh1138/GoGreen-uniapp/blob/main/IMG/interact.png)
+![Interact image](/IMG/interact.png)
