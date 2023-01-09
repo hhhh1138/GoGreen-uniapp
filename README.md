@@ -1,9 +1,12 @@
 # GoGreen-uniapp
 
 ## 运行环境
-语言：uniapp, html, css, js
+语言：uniapp, html, css, js 
+
 IDE: HBuilderX
+
 插件: colorUI, uView
+
 
 ## APP介绍
 濒危物种介绍APP
