@@ -1,0 +1,211 @@
+{
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+		{
+			"path": "pages/index/tabbar",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/index/main",
+			"style": {
+				"navigationBarTitleText": "导航页"
+			}
+		},
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "首页"
+			}
+		},
+		{
+			"path": "pages/camera2/camera2",
+			"style": {
+				//"navigationBarTitleText": "合影"
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "tn_components/daxiongmao",
+			"style": {
+				//"navigationStyle": "custom"
+				"navigationBarTitleText": null,
+				//"navigationBarBackgroundColor": "rgba(0,0,0,0)"
+				"app-plus": {
+					"titleNView": {
+						"buttons": [
+							{
+								
+								"fontSize": "20px",
+								"fontSrc": "/static/fontsrc/iconfont.ttf",
+								"text": "\ue657",
+								"color": "rgb(0,129,255)"
+							}
+						]
+					}
+				}
+			}
+		},
+		{
+			"path": "tn_components/beijixiong",
+			"style": {
+				//"navigationStyle": "custom"
+				"navigationBarTitleText": null,
+				//"navigationBarBackgroundColor": "rgba(0,0,0,0)"
+				"app-plus": {
+					"titleNView": {
+						"buttons": [
+							{
+								
+								"fontSize": "20px",
+								"fontSrc": "/static/fontsrc/iconfont.ttf",
+								"text": "\ue657",
+								"color": "rgb(0,129,255)"
+							}
+						]
+					}
+				}
+			}
+		},
+		{
+			"path": "tn_components/dongbeihu",
+			"style": {
+				//"navigationStyle": "custom"
+				"navigationBarTitleText": null,
+				//"navigationBarBackgroundColor": "rgba(0,0,0,0)"
+				"app-plus": {
+					"titleNView": {
+						"buttons": [
+							{
+								
+								"fontSize": "20px",
+								"fontSrc": "/static/fontsrc/iconfont.ttf",
+								"text": "\ue657",
+								"color": "rgb(0,129,255)"
+							}
+						]
+					}
+				}
+			}
+		},
+		{
+			"path": "tn_components/hongdoushan",
+			"style": {
+				//"navigationStyle": "custom"
+				"navigationBarTitleText": null,
+				//"navigationBarBackgroundColor": "rgba(0,0,0,0)"
+				"app-plus": {
+					"titleNView": {
+						"buttons": [
+							{
+								
+								"fontSize": "20px",
+								"fontSrc": "/static/fontsrc/iconfont.ttf",
+								"text": "\ue657",
+								"color": "rgb(0,129,255)"
+							}
+						]
+					}
+				}
+			}
+		},
+		{
+			"path": "tn_components/lanjing",
+			"style": {
+				//"navigationStyle": "custom"
+				"navigationBarTitleText": null,
+				//"navigationBarBackgroundColor": "rgba(0,0,0,0)"
+				"app-plus": {
+					"titleNView": {
+						"buttons": [
+							{
+								
+								"fontSize": "20px",
+								"fontSrc": "/static/fontsrc/iconfont.ttf",
+								"text": "\ue657",
+								"color": "rgb(0,129,255)"
+							}
+						]
+					}
+				}
+			}
+		},
+		{
+			"path": "tn_components/xuebao",
+			"style": {
+				//"navigationStyle": "custom"
+				"navigationBarTitleText": null,
+				//"navigationBarBackgroundColor": "rgba(0,0,0,0)"
+				"app-plus": {
+					"titleNView": {
+						"buttons": [
+							{
+								
+								"fontSize": "20px",
+								"fontSrc": "/static/fontsrc/iconfont.ttf",
+								"text": "\ue657",
+								"color": "rgb(0,129,255)"
+							}
+						]
+					}
+				}
+			}
+		},
+		{
+			"path": "tn_components/yangzie",
+			"style": {
+				//"navigationStyle": "custom"
+				"navigationBarTitleText": null,
+				//"navigationBarBackgroundColor": "rgba(0,0,0,0)"
+				"app-plus": {
+					"titleNView": {
+						"buttons": [
+							{
+								
+								"fontSize": "20px",
+								"fontSrc": "/static/fontsrc/iconfont.ttf",
+								"text": "\ue657",
+								"color": "rgb(0,129,255)"
+							}
+						]
+					}
+				}
+			}
+		},
+		{
+			"path": "tn_components/yinxing",
+			"style": {
+				//"navigationStyle": "custom"
+				"navigationBarTitleText": null,
+				//"navigationBarBackgroundColor": "rgba(0,0,0,0)"
+				"app-plus": {
+					"titleNView": {
+						"buttons": [
+							{
+								
+								"fontSize": "20px",
+								"fontSrc": "/static/fontsrc/iconfont.ttf",
+								"text": "\ue657",
+								"color": "rgb(0,129,255)"
+							}
+						]
+					}
+				}
+			}
+		},
+		{
+			"path": "tn_components/utils/daxiongmao-video",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "uni-app",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8"
+		
+	},
+	"uniIdRouter": {}
+}
