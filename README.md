@@ -21,3 +21,11 @@ IDE: HBuilderX
 
 ## 引用
 图片视频资源来自网络，故项目中static文件夹未提供。
+
+
+some websites:
+- https://www.iconfont.cn/collections/index?spm=a313x.7781069.1998910419.3
+- https://www.html5plus.org/doc/zh_cn/video.html
+- https://blog.csdn.net/qq_1307495/article/details/115766774
+- https://ext.dcloud.net.cn/plugin?id=1886#detail
+- https://blog.csdn.net/weixin_44433499/article/details/106494698
